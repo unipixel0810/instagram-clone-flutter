@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:instagram_clone/responsive/mobile_layout.dart';
-import 'package:instagram_clone/responsive/responsive_layout.dart';
-import 'package:instagram_clone/responsive/web_layout.dart';
+import 'package:instagram_clone/screens/login_screen.dart';
+import 'package:instagram_clone/screens/signup_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,10 +16,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
       ),
-      home: const ResponsiveLayout(
-        mobileLayout: MobileLayout(),
-        webLayout: WebLayout(),
-      ),
+      home: const LoginScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
+      },
     );
   }
 }
