@@ -86,7 +86,7 @@ class _PostCardState extends State<PostCard> {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                Image.network('https://picsum.photos/500/500?random=${widget.index}'),
+                Image.asset('assets/images/cat${widget.index % 3 + 1}.jpg'),
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
                   opacity: _showHeart ? 1.0 : 0.0,

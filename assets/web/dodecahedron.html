@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>12면체 주사위</title>
   <style>
     body {
@@ -13,6 +13,7 @@
       align-items: center;
       justify-content: center;
       font-family: Arial, sans-serif;
+      margin: 0;
     }
     h1 {
       color: #FFD600;
@@ -67,7 +68,7 @@
     renderer.setClearColor(0x181818, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
     camera.position.set(0, 0, 8);
@@ -78,139 +79,12 @@
     const dodeMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 0.3,
-      metalness: 0.1
+      metalness: 0.1,
     });
     const dodeMesh = new THREE.Mesh(dodeGeo, dodeMaterial);
     dodeMesh.castShadow = true;
     scene.add(dodeMesh);
 
-    // 12면체의 면 중심점 계산 및 숫자 텍스처 생성
-    function createNumberStickers() {
-      const positionAttribute = dodeGeo.getAttribute('position');
-      const indexAttribute = dodeGeo.getIndex();
-      
-      // 각 면의 정점들을 그룹화
-      const faces = [];
-      const faceVertices = [];
-      
-      // 12면체는 12개의 오각형 면을 가짐
-      for (let i = 0; i < indexAttribute.count; i += 3) {
-        const a = indexAttribute.getX(i);
-        const b = indexAttribute.getY(i);
-        const c = indexAttribute.getZ(i);
-        
-        const va = new THREE.Vector3().fromBufferAttribute(positionAttribute, a);
-        const vb = new THREE.Vector3().fromBufferAttribute(positionAttribute, b);
-        const vc = new THREE.Vector3().fromBufferAttribute(positionAttribute, c);
-        
-        // 삼각형의 중심점 계산
-        const center = new THREE.Vector3()
-          .add(va)
-          .add(vb)
-          .add(vc)
-          .divideScalar(3);
-        
-        // 면의 법선 벡터 계산
-        const normal = new THREE.Vector3()
-          .crossVectors(
-            new THREE.Vector3().subVectors(vb, va),
-            new THREE.Vector3().subVectors(vc, va)
-          )
-          .normalize();
-        
-        faces.push({ center, normal });
-      }
-      
-      // 중심점이 비슷한 면들을 그룹화 (같은 오각형 면의 삼각형들)
-      const faceGroups = [];
-      const used = new Array(faces.length).fill(false);
-      
-      for (let i = 0; i < faces.length; i++) {
-        if (used[i]) continue;
-        
-        const group = [i];
-        used[i] = true;
-        
-        for (let j = i + 1; j < faces.length; j++) {
-          if (used[j]) continue;
-          
-          const distance = faces[i].center.distanceTo(faces[j].center);
-          if (distance < 0.5) { // 임계값 조정
-            group.push(j);
-            used[j] = true;
-          }
-        }
-        
-        if (group.length >= 2) { // 오각형 면은 여러 삼각형으로 구성
-          faceGroups.push(group);
-        }
-      }
-      
-      // 12개 면에 대해 숫자 스티커 생성
-      faceGroups.slice(0, 12).forEach((group, faceIndex) => {
-        // 그룹의 중심점 계산
-        const groupCenter = new THREE.Vector3();
-        group.forEach(idx => {
-          groupCenter.add(faces[idx].center);
-        });
-        groupCenter.divideScalar(group.length);
-        
-        // 평균 법선 벡터 계산
-        const avgNormal = new THREE.Vector3();
-        group.forEach(idx => {
-          avgNormal.add(faces[idx].normal);
-        });
-        avgNormal.divideScalar(group.length).normalize();
-        
-        // 숫자 텍스처 생성
-        const canvas = document.createElement('canvas');
-        const size = 256;
-        canvas.width = canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        
-        // 배경 (반투명 원)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.beginPath();
-        ctx.arc(size/2, size/2, size/2 - 10, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // 숫자 텍스트
-        ctx.fillStyle = '#ff0000';
-        ctx.font = 'bold 120px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(String(faceIndex + 1), size/2, size/2);
-        
-        // 테두리
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(size/2, size/2, size/2 - 10, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        
-        // 스티커 메쉬 생성
-        const stickerGeo = new THREE.PlaneGeometry(0.8, 0.8);
-        const stickerMat = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          side: THREE.DoubleSide
-        });
-        
-        const sticker = new THREE.Mesh(stickerGeo, stickerMat);
-        
-        // 스티커 위치 설정 (면 중심에서 법선 방향으로 약간 이동)
-        const stickerPos = groupCenter.clone().normalize().multiplyScalar(1.85);
-        sticker.position.copy(stickerPos);
-        
-        // 스티커 회전 설정 (법선 방향으로 향하도록)
-        sticker.lookAt(stickerPos.clone().add(avgNormal));
-        
-        scene.add(sticker);
-      });
-    }
-    
     // 대안적인 방법: 미리 정의된 위치에 숫자 배치
     function createNumberStickersAlternative() {
       // 12면체의 각 면 중심 방향 벡터 (근사값)
@@ -226,60 +100,60 @@
         new THREE.Vector3(1, 0, 1.618).normalize(),
         new THREE.Vector3(-1, 0, 1.618).normalize(),
         new THREE.Vector3(1, 0, -1.618).normalize(),
-        new THREE.Vector3(-1, 0, -1.618).normalize()
+        new THREE.Vector3(-1, 0, -1.618).normalize(),
       ];
-      
+
       faceDirections.forEach((direction, index) => {
         // 숫자 텍스처 생성
         const canvas = document.createElement('canvas');
         const size = 256;
         canvas.width = canvas.height = size;
         const ctx = canvas.getContext('2d');
-        
+
         // 배경 (반투명 원)
         ctx.fillStyle = 'rgba(255, 214, 0, 0.9)';
         ctx.beginPath();
-        ctx.arc(size/2, size/2, size/2 - 10, 0, Math.PI * 2);
+        ctx.arc(size / 2, size / 2, size / 2 - 10, 0, Math.PI * 2);
         ctx.fill();
-        
+
         // 숫자 텍스트
         ctx.fillStyle = '#ff0000';
         ctx.font = 'bold 120px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(index + 1), size/2, size/2);
-        
+        ctx.fillText(String(index + 1), size / 2, size / 2);
+
         // 테두리
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(size/2, size/2, size/2 - 10, 0, Math.PI * 2);
+        ctx.arc(size / 2, size / 2, size / 2 - 10, 0, Math.PI * 2);
         ctx.stroke();
-        
+
         const texture = new THREE.CanvasTexture(canvas);
-        
+
         // 스티커 메쉬 생성
         const stickerGeo = new THREE.PlaneGeometry(0.8, 0.8);
         const stickerMat = new THREE.MeshBasicMaterial({
           map: texture,
           transparent: true,
-          side: THREE.DoubleSide
+          side: THREE.DoubleSide,
         });
-        
+
         const sticker = new THREE.Mesh(stickerGeo, stickerMat);
-        
+
         // 스티커 위치 설정
         const stickerPos = direction.clone().multiplyScalar(1.85);
         sticker.position.copy(stickerPos);
-        
+
         // 스티커가 중심을 향하도록 회전
         sticker.lookAt(0, 0, 0);
-        
+
         // 스티커를 주사위의 자식으로 추가 (함께 회전하도록)
         dodeMesh.add(sticker);
       });
     }
-    
+
     // 숫자 스티커 생성 (대안적 방법 사용)
     createNumberStickersAlternative();
 
@@ -294,7 +168,7 @@
     // 조명 설정
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
-    
+
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(5, 5, 5);
     directionalLight.castShadow = true;
@@ -304,21 +178,21 @@
     let isRolling = false;
     let rollStartTime = 0;
     const rollDuration = 2000; // 2초
-    let startRotation = new THREE.Euler();
-    let endRotation = new THREE.Euler();
-    
+    const startRotation = new THREE.Euler();
+    const endRotation = new THREE.Euler();
+
     const rollBtn = document.getElementById('rollBtn');
-    
+
     rollBtn.addEventListener('click', () => {
       if (isRolling) return;
-      
+
       isRolling = true;
       rollBtn.disabled = true;
       rollStartTime = performance.now();
-      
+
       // 현재 회전 저장
       startRotation.copy(dodeMesh.rotation);
-      
+
       // 목표 회전 설정 (여러 바퀴 + 랜덤 각도)
       endRotation.set(
         startRotation.x + (Math.random() * 4 + 3) * Math.PI * 2,
@@ -330,29 +204,29 @@
     // 애니메이션 루프
     function animate() {
       requestAnimationFrame(animate);
-      
+
       if (isRolling) {
         const elapsed = performance.now() - rollStartTime;
         let progress = elapsed / rollDuration;
-        
+
         if (progress >= 1) {
           progress = 1;
           isRolling = false;
           rollBtn.disabled = false;
         }
-        
+
         // 이지아웃 애니메이션
         const easeProgress = 1 - Math.pow(1 - progress, 3);
-        
+
         // 회전 보간
         dodeMesh.rotation.x = startRotation.x + (endRotation.x - startRotation.x) * easeProgress;
         dodeMesh.rotation.y = startRotation.y + (endRotation.y - startRotation.y) * easeProgress;
         dodeMesh.rotation.z = startRotation.z + (endRotation.z - startRotation.z) * easeProgress;
       }
-      
+
       renderer.render(scene, camera);
     }
-    
+
     animate();
   </script>
 </body>

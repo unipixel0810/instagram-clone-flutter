@@ -15,7 +15,9 @@ class _MobileLayoutState extends State<MobileLayout> {
 
   final List<Widget> _screens = [
     const FeedScreen(),
+    const Center(child: Text('Search')),
     const AddScreen(),
+    const Center(child: Text('Reels')),
     const ProfileScreen(),
   ];
 
